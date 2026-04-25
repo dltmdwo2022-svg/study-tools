@@ -52,6 +52,19 @@
       --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.1);
     }
 
+    [data-theme='dark'] {
+      --color-text: #f1f5f9;
+      --color-text-muted: #94a3b8;
+      --color-border: #334155;
+      --color-bg: #0f172a;
+      --color-bg-alt: #1e293b;
+      --color-primary-light: #1e3a8a;
+    }
+
+    [data-theme='dark'] .todo-delete:hover {
+      background: #450a0a;
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -489,6 +502,59 @@
       line-height: var(--leading-normal);
     }
 
+    .setting-group {
+      border: none;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .setting-legend {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: var(--space-1);
+    }
+
+    .theme-options {
+      display: flex;
+      gap: var(--space-2);
+      flex-wrap: wrap;
+    }
+
+    .theme-radio {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      font-size: var(--text-sm);
+      color: var(--color-text);
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      user-select: none;
+      min-height: 36px;
+    }
+
+    .theme-radio input[type='radio'] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--color-primary);
+      cursor: pointer;
+    }
+
+    .theme-radio:has(input:checked) {
+      background: var(--color-primary-light);
+      border-color: var(--color-primary);
+    }
+
+    .import-file-label {
+      cursor: pointer;
+      text-align: center;
+    }
+
     .carry-over-btn {
       width: 100%;
       margin-bottom: var(--space-3);
@@ -899,7 +965,7 @@
       <h1 class="app-header__title">학습 플래너</h1>
       <p class="app-header__date" id="todayDate" aria-live="polite"></p>
     </div>
-    <button type="button" class="btn btn-secondary" id="manageSubjectsBtn">과목 관리</button>
+    <button type="button" class="btn btn-secondary" id="openSettingsBtn">설정</button>
   </header>
 
   <main class="app-main">
@@ -1017,6 +1083,37 @@
     </div>
   </dialog>
 
+  <dialog class="modal" id="settingsModal" aria-labelledby="settingsModalTitle">
+    <div class="modal__inner">
+      <h2 id="settingsModalTitle" class="modal__title">설정</h2>
+      <fieldset class="setting-group">
+        <legend class="setting-legend">테마</legend>
+        <div class="theme-options">
+          <label class="theme-radio">
+            <input type="radio" name="theme" value="light"><span>라이트</span>
+          </label>
+          <label class="theme-radio">
+            <input type="radio" name="theme" value="dark"><span>다크</span>
+          </label>
+          <label class="theme-radio">
+            <input type="radio" name="theme" value="system" checked><span>시스템 자동</span>
+          </label>
+        </div>
+      </fieldset>
+      <fieldset class="setting-group">
+        <legend class="setting-legend">데이터 백업</legend>
+        <p class="modal__text">현재 일정·과목을 JSON 파일로 내보내거나 다른 기기 파일을 불러올 수 있습니다. 불러오면 현재 데이터를 덮어씁니다.</p>
+        <button type="button" class="btn btn-secondary" id="exportDataBtn">JSON 내보내기</button>
+        <label class="btn btn-secondary import-file-label">
+          <span>JSON 불러오기</span>
+          <input type="file" id="importDataInput" accept="application/json,.json" hidden>
+        </label>
+      </fieldset>
+      <button type="button" class="btn btn-secondary" id="openSubjectsFromSettings">과목 관리 열기</button>
+      <button type="button" class="btn btn-secondary" id="settingsModalClose">닫기</button>
+    </div>
+  </dialog>
+
   <dialog class="modal" id="subjectModal" aria-labelledby="subjectModalTitle">
     <div class="modal__inner">
       <h2 id="subjectModalTitle" class="modal__title">과목 관리</h2>
@@ -1034,7 +1131,7 @@
   </dialog>
 
   <footer class="app-footer">
-    <small>학습 플래너 v0.8 — Phase 8 (반복 일정 + 요일 선택 + 그룹 삭제)</small>
+    <small>학습 플래너 v0.10 — Phase 10 (백업/복원)</small>
   </footer>
 
   <script>
@@ -1412,7 +1509,6 @@
     const subjectAddForm = document.getElementById('subjectAddForm');
     const subjectNameInput = document.getElementById('subjectNameInput');
     const subjectColorInput = document.getElementById('subjectColorInput');
-    const manageSubjectsBtn = document.getElementById('manageSubjectsBtn');
     const subjectModalClose = document.getElementById('subjectModalClose');
 
     const getContrastText = (hex) => {
@@ -1524,11 +1620,6 @@
       addSubject(subjectNameInput.value, subjectColorInput.value);
       subjectNameInput.value = '';
       subjectNameInput.focus();
-    });
-
-    manageSubjectsBtn.addEventListener('click', () => {
-      renderSubjectList();
-      subjectModal.showModal();
     });
 
     subjectModalClose.addEventListener('click', () => {
@@ -1864,6 +1955,144 @@
       if (event.target === dayModal) {
         selectedDate = null;
         dayModal.close();
+      }
+    });
+
+    const THEME_KEY = 'study-planner:theme';
+    const settingsModal = document.getElementById('settingsModal');
+    const settingsModalClose = document.getElementById('settingsModalClose');
+    const openSettingsBtn = document.getElementById('openSettingsBtn');
+    const themeRadios = Array.from(document.querySelectorAll('input[name="theme"]'));
+    const openSubjectsFromSettings = document.getElementById('openSubjectsFromSettings');
+
+    const applyTheme = (theme) => {
+      if (theme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else if (theme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+      } else {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+      }
+    };
+
+    const loadTheme = () => {
+      try {
+        return localStorage.getItem(THEME_KEY) || 'system';
+      } catch (error) {
+        return 'system';
+      }
+    };
+
+    const saveTheme = (theme) => {
+      try {
+        localStorage.setItem(THEME_KEY, theme);
+      } catch (error) {
+        alert('테마 설정을 저장하지 못했습니다.');
+      }
+    };
+
+    const initialTheme = loadTheme();
+    applyTheme(initialTheme);
+    const initialRadio = themeRadios.find((radio) => radio.value === initialTheme);
+    if (initialRadio) initialRadio.checked = true;
+
+    themeRadios.forEach((radio) => {
+      radio.addEventListener('change', () => {
+        if (radio.checked) {
+          saveTheme(radio.value);
+          applyTheme(radio.value);
+        }
+      });
+    });
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (loadTheme() === 'system') applyTheme('system');
+    });
+
+    openSettingsBtn.addEventListener('click', () => settingsModal.showModal());
+
+    settingsModalClose.addEventListener('click', () => settingsModal.close());
+
+    settingsModal.addEventListener('click', (event) => {
+      if (event.target === settingsModal) settingsModal.close();
+    });
+
+    openSubjectsFromSettings.addEventListener('click', () => {
+      settingsModal.close();
+      renderSubjectList();
+      subjectModal.showModal();
+    });
+
+    const exportDataBtn = document.getElementById('exportDataBtn');
+    const importDataInput = document.getElementById('importDataInput');
+
+    const exportData = () => {
+      const payload = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        todos,
+        subjects,
+      };
+      try {
+        const blob = new Blob([JSON.stringify(payload, null, 2)], {
+          type: 'application/json',
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `study-planner-${formatDate(new Date())}.json`;
+        document.body.append(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        alert('파일 내보내기에 실패했습니다.');
+      }
+    };
+
+    const importData = (file) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const parsed = JSON.parse(event.target.result);
+          if (
+            !parsed
+            || !Array.isArray(parsed.todos)
+            || !Array.isArray(parsed.subjects)
+          ) {
+            alert('파일 형식이 올바르지 않습니다.');
+            return;
+          }
+          const ok = confirm(
+            `현재 데이터를 덮어씁니다. 계속하시겠습니까?\n불러올 항목: 할 일 ${parsed.todos.length}개, 과목 ${parsed.subjects.length}개`
+          );
+          if (!ok) return;
+          todos = parsed.todos;
+          subjects = parsed.subjects;
+          const todayStr = getTodayDateString();
+          todos.forEach((todo) => {
+            if (!todo.date) todo.date = todayStr;
+          });
+          saveAll();
+          renderSubjectSelect();
+          render();
+          alert('불러오기 완료.');
+        } catch (error) {
+          alert('파일을 읽지 못했습니다. JSON 형식이 손상됐을 수 있습니다.');
+        }
+      };
+      reader.onerror = () => alert('파일을 읽지 못했습니다.');
+      reader.readAsText(file);
+    };
+
+    exportDataBtn.addEventListener('click', exportData);
+
+    importDataInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        importData(file);
+        event.target.value = '';
       }
     });
 
