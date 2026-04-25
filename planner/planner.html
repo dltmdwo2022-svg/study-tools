@@ -93,6 +93,15 @@
       position: sticky;
       top: 0;
       z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-3);
+    }
+
+    .app-header__main {
+      flex: 1;
+      min-width: 0;
     }
 
     .app-header__title {
@@ -188,12 +197,13 @@
 
     .todo-form {
       display: flex;
+      flex-wrap: wrap;
       gap: var(--space-2);
       margin-bottom: var(--space-4);
     }
 
     .todo-input {
-      flex: 1;
+      flex: 1 1 100%;
       min-width: 0;
       padding: var(--space-3);
       font-family: inherit;
@@ -299,6 +309,155 @@
       border-color: var(--color-error);
     }
 
+    .btn-secondary {
+      background: var(--color-bg);
+      color: var(--color-text);
+      border-color: var(--color-border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--color-bg-alt);
+      border-color: var(--color-text-muted);
+    }
+
+    .subject-select {
+      flex: 1 1 0;
+      min-width: 100px;
+      padding: var(--space-3);
+      font-family: inherit;
+      font-size: var(--text-base);
+      color: var(--color-text);
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+    }
+
+    .subject-select:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-light);
+    }
+
+    .subject-badge {
+      flex-shrink: 0;
+      padding: var(--space-1) var(--space-2);
+      font-size: var(--text-xs);
+      font-weight: 500;
+      border-radius: var(--radius-sm);
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .modal {
+      width: min(92vw, 480px);
+      max-height: 86vh;
+      padding: 0;
+      border: none;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      background: var(--color-bg);
+      color: var(--color-text);
+    }
+
+    .modal::backdrop {
+      background: rgba(15, 23, 42, 0.5);
+    }
+
+    .modal__inner {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      padding: var(--space-6);
+      max-height: 86vh;
+      overflow-y: auto;
+    }
+
+    .modal__title {
+      font-size: var(--text-xl);
+      font-weight: 600;
+      line-height: var(--leading-tight);
+    }
+
+    .subject-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .subject-list:empty::after {
+      content: '등록된 과목이 없습니다.';
+      display: block;
+      text-align: center;
+      padding: var(--space-4);
+      color: var(--color-text-muted);
+      font-size: var(--text-sm);
+    }
+
+    .subject-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2);
+      background: var(--color-bg-alt);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+    }
+
+    .subject-color {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      border: 1px solid var(--color-border);
+    }
+
+    .subject-name-input {
+      flex: 1;
+      min-width: 0;
+      padding: var(--space-2);
+      font-family: inherit;
+      font-size: var(--text-base);
+      color: var(--color-text);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      transition: background 150ms ease-out, border-color 150ms ease-out;
+    }
+
+    .subject-name-input:focus {
+      outline: none;
+      background: var(--color-bg);
+      border-color: var(--color-primary);
+    }
+
+    .subject-add-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      align-items: center;
+      padding-top: var(--space-3);
+      border-top: 1px solid var(--color-border);
+    }
+
+    .subject-add-form .todo-input {
+      flex: 1 1 140px;
+    }
+
+    .color-input {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      background: transparent;
+      flex-shrink: 0;
+    }
+
     .app-footer {
       text-align: center;
       padding: var(--space-4);
@@ -316,9 +475,11 @@
     @media (min-width: 768px) {
       .app-header {
         padding: var(--space-4) var(--space-6);
+      }
+
+      .app-header__main {
         display: flex;
         align-items: baseline;
-        justify-content: space-between;
         gap: var(--space-4);
       }
 
@@ -338,13 +499,20 @@
         font-size: var(--text-base);
         padding: var(--space-3) var(--space-4);
       }
+
+      .todo-form .todo-input {
+        flex: 1 1 0;
+      }
     }
   </style>
 </head>
 <body>
   <header class="app-header">
-    <h1 class="app-header__title">학습 플래너</h1>
-    <p class="app-header__date" id="todayDate" aria-live="polite"></p>
+    <div class="app-header__main">
+      <h1 class="app-header__title">학습 플래너</h1>
+      <p class="app-header__date" id="todayDate" aria-live="polite"></p>
+    </div>
+    <button type="button" class="btn btn-secondary" id="manageSubjectsBtn">과목 관리</button>
   </header>
 
   <main class="app-main">
@@ -362,6 +530,10 @@
         <label for="todoInput" class="visually-hidden">할 일 입력</label>
         <input id="todoInput" class="todo-input" type="text"
                placeholder="할 일을 입력하세요" maxlength="100" required>
+        <label for="subjectSelect" class="visually-hidden">과목 선택</label>
+        <select id="subjectSelect" class="subject-select">
+          <option value="">과목 없음</option>
+        </select>
         <button type="submit" class="btn btn-primary">추가</button>
       </form>
       <ul id="todoList" class="todo-list" aria-label="오늘의 할 일"></ul>
@@ -377,8 +549,24 @@
     </section>
   </main>
 
+  <dialog class="modal" id="subjectModal" aria-labelledby="subjectModalTitle">
+    <div class="modal__inner">
+      <h2 id="subjectModalTitle" class="modal__title">과목 관리</h2>
+      <ul class="subject-list" id="subjectList" aria-label="등록된 과목"></ul>
+      <form class="subject-add-form" id="subjectAddForm" autocomplete="off">
+        <label for="subjectNameInput" class="visually-hidden">새 과목 이름</label>
+        <input id="subjectNameInput" class="todo-input" type="text"
+               placeholder="새 과목 이름" maxlength="20" required>
+        <label for="subjectColorInput" class="visually-hidden">과목 색상</label>
+        <input id="subjectColorInput" class="color-input" type="color" value="#2563eb">
+        <button type="submit" class="btn btn-primary">추가</button>
+      </form>
+      <button type="button" class="btn btn-secondary" id="subjectModalClose">닫기</button>
+    </div>
+  </dialog>
+
   <footer class="app-footer">
-    <small>학습 플래너 v0.1 — Phase 1 (정적 골격)</small>
+    <small>학습 플래너 v0.4 — Phase 4 (영속성)</small>
   </footer>
 
   <script>
@@ -423,10 +611,16 @@
       return `todo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     };
 
-    const addTodo = (rawText) => {
+    const addTodo = (rawText, subjectId) => {
       const text = rawText.trim();
       if (!text) return;
-      todos.push({ id: generateId(), text, done: false });
+      todos.push({
+        id: generateId(),
+        text,
+        done: false,
+        subjectId: subjectId || null,
+      });
+      saveAll();
       render();
     };
 
@@ -434,11 +628,13 @@
       const todo = todos.find((item) => item.id === id);
       if (!todo) return;
       todo.done = !todo.done;
+      saveAll();
       render();
     };
 
     const deleteTodo = (id) => {
       todos = todos.filter((item) => item.id !== id);
+      saveAll();
       render();
     };
 
@@ -452,6 +648,19 @@
       checkbox.className = 'todo-check';
       checkbox.checked = todo.done;
       checkbox.setAttribute('aria-label', `${todo.text} 완료 여부`);
+      li.append(checkbox);
+
+      const subject = todo.subjectId
+        ? subjects.find((s) => s.id === todo.subjectId)
+        : null;
+      if (subject) {
+        const badge = document.createElement('span');
+        badge.className = 'subject-badge';
+        badge.textContent = subject.name;
+        badge.style.background = subject.color;
+        badge.style.color = getContrastText(subject.color);
+        li.append(badge);
+      }
 
       const span = document.createElement('span');
       span.className = 'todo-text';
@@ -463,7 +672,7 @@
       deleteBtn.textContent = '삭제';
       deleteBtn.setAttribute('aria-label', `${todo.text} 삭제`);
 
-      li.append(checkbox, span, deleteBtn);
+      li.append(span, deleteBtn);
       return li;
     };
 
@@ -479,7 +688,7 @@
 
     todoForm.addEventListener('submit', (event) => {
       event.preventDefault();
-      addTodo(todoInput.value);
+      addTodo(todoInput.value, subjectSelect.value);
       todoInput.value = '';
       todoInput.focus();
     });
@@ -495,6 +704,188 @@
       }
     });
 
+    const DEFAULT_SUBJECTS = [
+      { name: '국어', color: '#dc2626' },
+      { name: '수학', color: '#2563eb' },
+      { name: '영어', color: '#16a34a' },
+      { name: '과학', color: '#ea580c' },
+      { name: '탐구', color: '#9333ea' },
+    ];
+
+    let subjects = DEFAULT_SUBJECTS.map((subject) => ({
+      id: generateId(),
+      ...subject,
+    }));
+
+    const subjectSelect = document.getElementById('subjectSelect');
+    const subjectModal = document.getElementById('subjectModal');
+    const subjectList = document.getElementById('subjectList');
+    const subjectAddForm = document.getElementById('subjectAddForm');
+    const subjectNameInput = document.getElementById('subjectNameInput');
+    const subjectColorInput = document.getElementById('subjectColorInput');
+    const manageSubjectsBtn = document.getElementById('manageSubjectsBtn');
+    const subjectModalClose = document.getElementById('subjectModalClose');
+
+    const getContrastText = (hex) => {
+      const match = /^#([0-9a-f]{6})$/i.exec(hex);
+      if (!match) return '#ffffff';
+      const r = parseInt(match[1].slice(0, 2), 16);
+      const g = parseInt(match[1].slice(2, 4), 16);
+      const b = parseInt(match[1].slice(4, 6), 16);
+      const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+      return luminance > 160 ? '#0f172a' : '#ffffff';
+    };
+
+    const addSubject = (rawName, color) => {
+      const name = rawName.trim();
+      if (!name) return;
+      subjects.push({ id: generateId(), name, color });
+      saveAll();
+      renderSubjectList();
+      renderSubjectSelect();
+    };
+
+    const updateSubjectName = (id, rawName) => {
+      const subject = subjects.find((item) => item.id === id);
+      if (!subject) return;
+      const name = rawName.trim();
+      if (!name) {
+        renderSubjectList();
+        return;
+      }
+      subject.name = name;
+      saveAll();
+      renderSubjectSelect();
+      render();
+    };
+
+    const deleteSubject = (id) => {
+      subjects = subjects.filter((subject) => subject.id !== id);
+      todos.forEach((todo) => {
+        if (todo.subjectId === id) todo.subjectId = null;
+      });
+      saveAll();
+      renderSubjectList();
+      renderSubjectSelect();
+      render();
+    };
+
+    const renderSubjectSelect = () => {
+      const previousValue = subjectSelect.value;
+      subjectSelect.replaceChildren();
+
+      const noneOption = document.createElement('option');
+      noneOption.value = '';
+      noneOption.textContent = '과목 없음';
+      subjectSelect.append(noneOption);
+
+      subjects.forEach((subject) => {
+        const option = document.createElement('option');
+        option.value = subject.id;
+        option.textContent = subject.name;
+        subjectSelect.append(option);
+      });
+
+      if (subjects.some((subject) => subject.id === previousValue)) {
+        subjectSelect.value = previousValue;
+      }
+    };
+
+    const buildSubjectItem = (subject) => {
+      const li = document.createElement('li');
+      li.className = 'subject-item';
+      li.dataset.id = subject.id;
+
+      const colorDot = document.createElement('span');
+      colorDot.className = 'subject-color';
+      colorDot.style.background = subject.color;
+
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.className = 'subject-name-input';
+      nameInput.value = subject.name;
+      nameInput.maxLength = 20;
+      nameInput.setAttribute('aria-label', `${subject.name} 이름 수정`);
+      nameInput.addEventListener('blur', () => updateSubjectName(subject.id, nameInput.value));
+      nameInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          nameInput.blur();
+        }
+      });
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.className = 'todo-delete';
+      deleteBtn.textContent = '삭제';
+      deleteBtn.setAttribute('aria-label', `${subject.name} 삭제`);
+      deleteBtn.addEventListener('click', () => deleteSubject(subject.id));
+
+      li.append(colorDot, nameInput, deleteBtn);
+      return li;
+    };
+
+    const renderSubjectList = () => {
+      subjectList.replaceChildren();
+      subjects.forEach((subject) => subjectList.append(buildSubjectItem(subject)));
+    };
+
+    subjectAddForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      addSubject(subjectNameInput.value, subjectColorInput.value);
+      subjectNameInput.value = '';
+      subjectNameInput.focus();
+    });
+
+    manageSubjectsBtn.addEventListener('click', () => {
+      renderSubjectList();
+      subjectModal.showModal();
+    });
+
+    subjectModalClose.addEventListener('click', () => {
+      subjectModal.close();
+    });
+
+    subjectModal.addEventListener('click', (event) => {
+      if (event.target === subjectModal) subjectModal.close();
+    });
+
+    const STORAGE_KEY = 'study-planner:v1';
+
+    const saveAll = () => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ todos, subjects }));
+      } catch (error) {
+        alert('데이터를 저장하지 못했습니다. 브라우저 저장소가 가득 찼거나 비활성화되어 있을 수 있습니다.');
+      }
+    };
+
+    const loadAll = () => {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      try {
+        const parsed = JSON.parse(raw);
+        if (
+          !parsed
+          || !Array.isArray(parsed.todos)
+          || !Array.isArray(parsed.subjects)
+        ) {
+          throw new Error('저장된 데이터 형식이 올바르지 않습니다.');
+        }
+        return parsed;
+      } catch (error) {
+        alert('저장된 데이터를 읽지 못했습니다. 데이터 형식이 손상됐을 수 있어 기본 상태로 시작합니다.');
+        return null;
+      }
+    };
+
+    const stored = loadAll();
+    if (stored) {
+      todos = stored.todos;
+      subjects = stored.subjects;
+    }
+
+    renderSubjectSelect();
     render();
   </script>
 </body>
