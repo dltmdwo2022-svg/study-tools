@@ -309,6 +309,71 @@
       border-color: var(--color-error);
     }
 
+    .todo-time {
+      flex-shrink: 0;
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--color-text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .todo-item.is-done .todo-time {
+      text-decoration: line-through;
+    }
+
+    .time-toggle {
+      flex: 1 1 100%;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .time-toggle input[type='checkbox'] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--color-primary);
+      cursor: pointer;
+    }
+
+    .time-fields {
+      flex: 1 1 100%;
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .time-fields[hidden] {
+      display: none;
+    }
+
+    .time-input {
+      flex: 1;
+      min-width: 0;
+      padding: var(--space-2) var(--space-3);
+      font-family: inherit;
+      font-size: var(--text-base);
+      color: var(--color-text);
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .time-input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-light);
+    }
+
+    .time-sep {
+      color: var(--color-text-muted);
+      font-weight: 500;
+    }
+
     .btn-secondary {
       background: var(--color-bg);
       color: var(--color-text);
@@ -535,6 +600,17 @@
           <option value="">과목 없음</option>
         </select>
         <button type="submit" class="btn btn-primary">추가</button>
+        <label class="time-toggle">
+          <input type="checkbox" id="timeToggleCheck">
+          <span>시간 지정</span>
+        </label>
+        <div class="time-fields" id="timeFields" hidden>
+          <label for="startTimeInput" class="visually-hidden">시작 시간</label>
+          <input id="startTimeInput" type="time" class="time-input">
+          <span class="time-sep" aria-hidden="true">–</span>
+          <label for="endTimeInput" class="visually-hidden">종료 시간 (선택)</label>
+          <input id="endTimeInput" type="time" class="time-input">
+        </div>
       </form>
       <ul id="todoList" class="todo-list" aria-label="오늘의 할 일"></ul>
       <p class="empty-state" id="emptyState">오늘 등록된 일정이 없습니다.</p>
@@ -566,7 +642,7 @@
   </dialog>
 
   <footer class="app-footer">
-    <small>학습 플래너 v0.4 — Phase 4 (영속성)</small>
+    <small>학습 플래너 v0.5 — Phase 5 (시간블록)</small>
   </footer>
 
   <script>
@@ -611,7 +687,7 @@
       return `todo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     };
 
-    const addTodo = (rawText, subjectId) => {
+    const addTodo = (rawText, subjectId, startTime, endTime) => {
       const text = rawText.trim();
       if (!text) return;
       todos.push({
@@ -619,6 +695,8 @@
         text,
         done: false,
         subjectId: subjectId || null,
+        startTime: startTime || null,
+        endTime: endTime || null,
       });
       saveAll();
       render();
@@ -662,6 +740,15 @@
         li.append(badge);
       }
 
+      if (todo.startTime) {
+        const timeSpan = document.createElement('span');
+        timeSpan.className = 'todo-time';
+        timeSpan.textContent = todo.endTime
+          ? `${todo.startTime}–${todo.endTime}`
+          : todo.startTime;
+        li.append(timeSpan);
+      }
+
       const span = document.createElement('span');
       span.className = 'todo-text';
       span.textContent = todo.text;
@@ -676,6 +763,13 @@
       return li;
     };
 
+    const sortTodosForDisplay = (list) => [...list].sort((a, b) => {
+      if (a.startTime && !b.startTime) return -1;
+      if (!a.startTime && b.startTime) return 1;
+      if (a.startTime && b.startTime) return a.startTime.localeCompare(b.startTime);
+      return 0;
+    });
+
     const render = () => {
       todoList.replaceChildren();
       if (todos.length === 0) {
@@ -683,12 +777,28 @@
         return;
       }
       emptyState.hidden = true;
-      todos.forEach((todo) => todoList.append(buildTodoItem(todo)));
+      sortTodosForDisplay(todos).forEach((todo) => todoList.append(buildTodoItem(todo)));
     };
+
+    const timeToggleCheck = document.getElementById('timeToggleCheck');
+    const timeFields = document.getElementById('timeFields');
+    const startTimeInput = document.getElementById('startTimeInput');
+    const endTimeInput = document.getElementById('endTimeInput');
+
+    timeToggleCheck.addEventListener('change', () => {
+      timeFields.hidden = !timeToggleCheck.checked;
+      if (!timeToggleCheck.checked) {
+        startTimeInput.value = '';
+        endTimeInput.value = '';
+      }
+    });
 
     todoForm.addEventListener('submit', (event) => {
       event.preventDefault();
-      addTodo(todoInput.value, subjectSelect.value);
+      const useTime = timeToggleCheck.checked;
+      const startTime = useTime ? startTimeInput.value : '';
+      const endTime = useTime ? endTimeInput.value : '';
+      addTodo(todoInput.value, subjectSelect.value, startTime, endTime);
       todoInput.value = '';
       todoInput.focus();
     });
