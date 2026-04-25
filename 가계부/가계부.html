@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>내 한 달 용돈 대시보드</title>
+<style>
+:root {
+  --color-primary: #c2410c;
+  --color-primary-hover: #9a3412;
+  --color-primary-light: #fed7aa;
+  --color-text: #44331e;
+  --color-text-muted: #8b6f47;
+  --color-border: #f3deba;
+  --color-bg: #fffaf2;
+  --color-bg-alt: #fef3e2;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-error: #dc2626;
+  --color-info: #0891b2;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Segoe UI', sans-serif;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+
+  --cat-food: #dc2626;
+  --cat-snack: #d97706;
+  --cat-transport: #16a34a;
+  --cat-supplies: #2563eb;
+  --cat-comm: #7c3aed;
+  --cat-leisure: #ec4899;
+  --cat-savings: #0891b2;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-bg-alt);
+  color: var(--color-text);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .container { padding: var(--space-12) var(--space-8); }
+}
+
+header { margin-bottom: var(--space-8); }
+
+h1 {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  margin: 0 0 var(--space-2);
+  letter-spacing: -0.02em;
+}
+
+.subtitle { color: var(--color-text-muted); margin: 0; }
+
+.card {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.card__title {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  margin: 0 0 var(--space-4);
+}
+
+.income-display {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.income-display__value {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.income-display__unit {
+  font-size: var(--text-lg);
+  color: var(--color-text-muted);
+}
+
+.range-bounds {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-2);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+}
+
+@media (min-width: 1024px) {
+  .grid { grid-template-columns: 1fr 1fr; }
+}
+
+.slider-row {
+  display: grid;
+  grid-template-columns: 6rem 1fr 5.5rem;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+}
+
+.slider-row + .slider-row {
+  border-top: 1px solid var(--color-border);
+}
+
+.slider-row__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 500;
+}
+
+.slider-row__color {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  flex: none;
+}
+
+.slider-row__value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+input[type="range"] {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: var(--color-border);
+  border-radius: 3px;
+  outline: none;
+  margin: 0;
+}
+
+input[type="range"]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.chart-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.pie {
+  width: 100%;
+  max-width: 280px;
+  aspect-ratio: 1;
+  position: relative;
+}
+
+.pie svg { width: 100%; height: 100%; display: block; }
+
+.pie__center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.pie__center-label {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.pie__center-value {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2) var(--space-4);
+  width: 100%;
+  font-size: var(--text-sm);
+}
+
+.legend__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+}
+
+.legend__dot {
+  width: 0.6rem; height: 0.6rem;
+  border-radius: 50%;
+  flex: none;
+}
+
+.legend__pct {
+  margin-left: auto;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+@media (max-width: 639px) {
+  .summary { grid-template-columns: 1fr; }
+}
+
+.summary__cell {
+  padding: var(--space-4);
+  background: var(--color-bg-alt);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.summary__label {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-1);
+}
+
+.summary__value {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary__sub {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.summary__value.is-error { color: var(--color-error); }
+.summary__value.is-success { color: var(--color-success); }
+
+.goal-input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.goal-input {
+  width: 8rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: var(--text-base);
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.goal-input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-color: var(--color-primary);
+}
+
+.progress {
+  width: 100%;
+  height: 1.5rem;
+  background: var(--color-bg-alt);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.progress__bar {
+  height: 100%;
+  background: var(--color-success);
+  transition: width 200ms ease-out;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: var(--space-3);
+  color: white;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  min-width: 2.5rem;
+}
+
+.progress__bar.is-over { background: var(--color-info); }
+
+.goal-status {
+  margin-top: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.warning {
+  background: #fef2f2;
+  color: var(--color-error);
+  border: 1px solid #fecaca;
+  padding: var(--space-3) var(--space-4);
+  border-radius: 8px;
+  margin-top: var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.hint {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+
+.cat-food { background: var(--cat-food); }
+.cat-snack { background: var(--cat-snack); }
+.cat-transport { background: var(--cat-transport); }
+.cat-supplies { background: var(--cat-supplies); }
+.cat-comm { background: var(--cat-comm); }
+.cat-leisure { background: var(--cat-leisure); }
+.cat-savings { background: var(--cat-savings); }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>내 한 달 용돈 대시보드</h1>
+  <p class="subtitle">용돈과 항목별 지출을 슬라이더로 움직여 남는 금액과 비율을 실시간으로 확인합니다.</p>
+</header>
+
+<section class="card" aria-labelledby="income-title">
+  <h2 class="card__title" id="income-title">월 용돈</h2>
+  <div class="income-display">
+    <span class="income-display__value" id="income-value">20</span>
+    <span class="income-display__unit">만원</span>
+  </div>
+  <input type="range" id="income" min="5" max="50" step="1" value="20" aria-label="월 용돈 (만원)">
+  <div class="range-bounds">
+    <span>5만원</span><span>50만원</span>
+  </div>
+  <p class="hint">부모님이 따로 내주시는 항목(예: 학원비)은 빼고, 본인 지갑에서 나가는 돈만 입력하세요.</p>
+</section>
+
+<div class="grid">
+  <section class="card" aria-labelledby="expenses-title">
+    <h2 class="card__title" id="expenses-title">한 달 지출 항목</h2>
+    <div id="sliders"></div>
+  </section>
+
+  <section class="card" aria-labelledby="chart-title">
+    <h2 class="card__title" id="chart-title">항목별 비율</h2>
+    <div class="chart-wrap">
+      <div class="pie">
+        <svg viewBox="0 0 200 200" id="pie" role="img" aria-label="항목별 지출 비율 원형 그래프"></svg>
+        <div class="pie__center">
+          <span class="pie__center-label">총 지출</span>
+          <span class="pie__center-value" id="pie-center-value">0만원</span>
+        </div>
+      </div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </section>
+</div>
+
+<section class="card" aria-labelledby="summary-title">
+  <h2 class="card__title" id="summary-title">월 요약</h2>
+  <div class="summary">
+    <div class="summary__cell">
+      <div class="summary__label">월 수입</div>
+      <div class="summary__value" id="sum-income">500만원</div>
+      <div class="summary__sub" id="sum-income-won">5,000,000원</div>
+    </div>
+    <div class="summary__cell">
+      <div class="summary__label">총 지출 (저축 포함)</div>
+      <div class="summary__value" id="sum-expense">0만원</div>
+      <div class="summary__sub" id="sum-expense-won">0원</div>
+    </div>
+    <div class="summary__cell">
+      <div class="summary__label">남는 금액</div>
+      <div class="summary__value" id="sum-remain">0만원</div>
+      <div class="summary__sub" id="sum-remain-won">0원</div>
+    </div>
+  </div>
+  <div id="warning-box" class="warning" hidden></div>
+</section>
+
+<section class="card" aria-labelledby="goal-title">
+  <h2 class="card__title" id="goal-title">저축 목표 달성률</h2>
+  <div class="goal-input-row">
+    <label for="goal">월 저축 목표</label>
+    <input type="number" id="goal" class="goal-input" min="0" max="10000" step="10" value="150">
+    <span>만원</span>
+  </div>
+  <div class="progress">
+    <div class="progress__bar" id="progress-bar" style="width:0%" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">0%</div>
+  </div>
+  <p class="goal-status" id="goal-status"></p>
+</section>
+
+</div>
+
+<script>
+'use strict';
+
+const CATEGORIES = [
+  { id: 'food',      label: '식비',   cssClass: 'cat-food',      color: '#ef4444', max: 200, defaultValue: 70  },
+  { id: 'transport', label: '교통비', cssClass: 'cat-transport', color: '#f59e0b', max: 100, defaultValue: 30  },
+  { id: 'education', label: '교육비', cssClass: 'cat-education', color: '#3b82f6', max: 300, defaultValue: 80  },
+  { id: 'insurance', label: '보험',   cssClass: 'cat-insurance', color: '#8b5cf6', max: 100, defaultValue: 30  },
+  { id: 'comm',      label: '통신비', cssClass: 'cat-comm',      color: '#06b6d4', max: 50,  defaultValue: 15  },
+  { id: 'leisure',   label: '여가',   cssClass: 'cat-leisure',   color: '#ec4899', max: 200, defaultValue: 30  },
+  { id: 'savings',   label: '저축',   cssClass: 'cat-savings',   color: '#16a34a', max: 500, defaultValue: 125 },
+];
+
+const PIE_CX = 100;
+const PIE_CY = 100;
+const PIE_R = 80;
+const MANWON = 10000;
+const numberFormatter = new Intl.NumberFormat('ko-KR');
+const formatManwon = (v) => `${numberFormatter.format(v)}만원`;
+const formatWon = (v) => `${numberFormatter.format(v * MANWON)}원`;
+
+function buildSliders() {
+  const container = document.getElementById('sliders');
+  container.innerHTML = CATEGORIES.map((cat) => `
+    <div class="slider-row">
+      <label class="slider-row__label" for="slider-${cat.id}">
+        <span class="slider-row__color ${cat.cssClass}" aria-hidden="true"></span>
+        <span>${cat.label}</span>
+      </label>
+      <input type="range" id="slider-${cat.id}" data-cat="${cat.id}" min="0" max="${cat.max}" step="1" value="${cat.defaultValue}" aria-label="${cat.label} (만원)">
+      <output class="slider-row__value" id="value-${cat.id}" for="slider-${cat.id}">${formatManwon(cat.defaultValue)}</output>
+    </div>
+  `).join('');
+}
+
+function getValues() {
+  const income = Number(document.getElementById('income').value);
+  const goal = Math.max(0, Number(document.getElementById('goal').value) || 0);
+  const expenses = CATEGORIES.map((cat) => ({
+    ...cat,
+    value: Number(document.getElementById(`slider-${cat.id}`).value),
+  }));
+  return { income, goal, expenses };
+}
+
+function polarToCartesian(cx, cy, r, angleDeg) {
+  const rad = (angleDeg - 90) * Math.PI / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+
+function describeArc(cx, cy, r, startAngle, endAngle) {
+  const start = polarToCartesian(cx, cy, r, startAngle);
+  const end = polarToCartesian(cx, cy, r, endAngle);
+  const largeArc = endAngle - startAngle > 180 ? 1 : 0;
+  return `M ${cx},${cy} L ${start.x},${start.y} A ${r},${r} 0 ${largeArc} 1 ${end.x},${end.y} Z`;
+}
+
+function renderPie(expenses) {
+  const total = expenses.reduce((sum, e) => sum + e.value, 0);
+  const svg = document.getElementById('pie');
+  document.getElementById('pie-center-value').textContent = formatManwon(total);
+
+  if (total === 0) {
+    svg.innerHTML = `<circle cx="${PIE_CX}" cy="${PIE_CY}" r="${PIE_R}" fill="#e2e8f0" />`;
+    return;
+  }
+
+  const positives = expenses.filter((e) => e.value > 0);
+  if (positives.length === 1) {
+    const only = positives[0];
+    svg.innerHTML = `<circle cx="${PIE_CX}" cy="${PIE_CY}" r="${PIE_R}" fill="${only.color}"><title>${only.label}: ${formatManwon(only.value)} (100%)</title></circle>`;
+    return;
+  }
+
+  let startAngle = 0;
+  const paths = positives.map((e) => {
+    const angle = (e.value / total) * 360;
+    const endAngle = startAngle + angle;
+    const path = describeArc(PIE_CX, PIE_CY, PIE_R, startAngle, endAngle);
+    const pct = (e.value / total * 100).toFixed(1);
+    startAngle = endAngle;
+    return `<path d="${path}" fill="${e.color}"><title>${e.label}: ${formatManwon(e.value)} (${pct}%)</title></path>`;
+  });
+  svg.innerHTML = paths.join('');
+}
+
+function renderLegend(expenses) {
+  const total = expenses.reduce((sum, e) => sum + e.value, 0);
+  const legend = document.getElementById('legend');
+  legend.innerHTML = expenses.map((e) => {
+    const pct = total === 0 ? 0 : (e.value / total) * 100;
+    return `
+      <div class="legend__item">
+        <span class="legend__dot ${e.cssClass}" aria-hidden="true"></span>
+        <span>${e.label}</span>
+        <span class="legend__pct">${pct.toFixed(1)}%</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderSummary(income, expenses) {
+  const total = expenses.reduce((sum, e) => sum + e.value, 0);
+  const remain = income - total;
+
+  document.getElementById('sum-income').textContent = formatManwon(income);
+  document.getElementById('sum-income-won').textContent = formatWon(income);
+  document.getElementById('sum-expense').textContent = formatManwon(total);
+  document.getElementById('sum-expense-won').textContent = formatWon(total);
+
+  const remainEl = document.getElementById('sum-remain');
+  const remainWonEl = document.getElementById('sum-remain-won');
+  remainEl.textContent = formatManwon(remain);
+  remainWonEl.textContent = formatWon(remain);
+  remainEl.classList.remove('is-error', 'is-success');
+  if (remain < 0) remainEl.classList.add('is-error');
+  else if (remain > 0) remainEl.classList.add('is-success');
+
+  const warn = document.getElementById('warning-box');
+  if (remain < 0) {
+    warn.hidden = false;
+    warn.textContent = `지출이 수입을 ${formatManwon(-remain)} 초과했습니다. 항목을 조정해 주세요.`;
+  } else {
+    warn.hidden = true;
+    warn.textContent = '';
+  }
+}
+
+function renderGoal(expenses, goal) {
+  const savingsCat = expenses.find((e) => e.id === 'savings');
+  const savings = savingsCat ? savingsCat.value : 0;
+  const bar = document.getElementById('progress-bar');
+  const status = document.getElementById('goal-status');
+
+  if (goal <= 0) {
+    bar.style.width = '0%';
+    bar.textContent = '';
+    bar.classList.remove('is-over');
+    bar.setAttribute('aria-valuenow', '0');
+    status.textContent = '월 저축 목표 금액을 입력하세요.';
+    return;
+  }
+
+  const ratio = (savings / goal) * 100;
+  const displayRatio = Math.min(ratio, 100);
+  bar.style.width = `${displayRatio}%`;
+  bar.textContent = `${ratio.toFixed(0)}%`;
+  bar.setAttribute('aria-valuenow', String(Math.round(ratio)));
+
+  if (ratio >= 100) {
+    bar.classList.add('is-over');
+    status.textContent = `목표 달성. 초과 저축액 ${formatManwon(savings - goal)}.`;
+  } else {
+    bar.classList.remove('is-over');
+    status.textContent = `목표까지 ${formatManwon(goal - savings)} 남음. 현재 저축 ${formatManwon(savings)} / 목표 ${formatManwon(goal)}.`;
+  }
+}
+
+function update() {
+  const { income, goal, expenses } = getValues();
+
+  document.getElementById('income-value').textContent = numberFormatter.format(income);
+  expenses.forEach((e) => {
+    document.getElementById(`value-${e.id}`).textContent = formatManwon(e.value);
+  });
+
+  renderPie(expenses);
+  renderLegend(expenses);
+  renderSummary(income, expenses);
+  renderGoal(expenses, goal);
+}
+
+function init() {
+  buildSliders();
+  document.getElementById('income').addEventListener('input', update);
+  document.getElementById('goal').addEventListener('input', update);
+  CATEGORIES.forEach((cat) => {
+    document.getElementById(`slider-${cat.id}`).addEventListener('input', update);
+  });
+  update();
+}
+
+init();
+</script>
+</body>
+</html>

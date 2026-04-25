@@ -550,9 +550,91 @@
       border-color: var(--color-primary);
     }
 
+    .settings-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin-bottom: var(--space-2);
+    }
+
+    .settings-back-btn {
+      flex-shrink: 0;
+      padding: var(--space-2) var(--space-3);
+      font-size: var(--text-sm);
+      min-height: 36px;
+    }
+
+    .settings-back-btn[hidden] {
+      display: none;
+    }
+
+    .settings-screen {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .settings-screen[hidden] {
+      display: none;
+    }
+
+    .settings-menu-btn {
+      width: 100%;
+      justify-content: flex-start;
+      padding: var(--space-3) var(--space-4);
+      font-size: var(--text-base);
+      font-weight: 500;
+      text-align: left;
+    }
+
     .import-file-label {
       cursor: pointer;
       text-align: center;
+    }
+
+    .notify-list {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-1);
+      min-height: 32px;
+    }
+
+    .notify-list:empty::after {
+      content: '등록된 알림 시점이 없습니다.';
+      display: block;
+      width: 100%;
+      text-align: center;
+      padding: var(--space-2);
+      color: var(--color-text-muted);
+      font-size: var(--text-sm);
+    }
+
+    .notify-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-1) var(--space-2);
+      background: var(--color-primary-light);
+      color: var(--color-primary);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      border-radius: var(--radius-sm);
+    }
+
+    .notify-chip__remove {
+      background: transparent;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      font-size: var(--text-base);
+      line-height: 1;
+      padding: 0 var(--space-1);
+    }
+
+    .notify-add-form {
+      display: flex;
+      gap: var(--space-2);
     }
 
     .carry-over-btn {
@@ -1085,53 +1167,83 @@
 
   <dialog class="modal" id="settingsModal" aria-labelledby="settingsModalTitle">
     <div class="modal__inner">
-      <h2 id="settingsModalTitle" class="modal__title">설정</h2>
-      <fieldset class="setting-group">
-        <legend class="setting-legend">테마</legend>
-        <div class="theme-options">
-          <label class="theme-radio">
-            <input type="radio" name="theme" value="light"><span>라이트</span>
-          </label>
-          <label class="theme-radio">
-            <input type="radio" name="theme" value="dark"><span>다크</span>
-          </label>
-          <label class="theme-radio">
-            <input type="radio" name="theme" value="system" checked><span>시스템 자동</span>
-          </label>
-        </div>
-      </fieldset>
-      <fieldset class="setting-group">
-        <legend class="setting-legend">데이터 백업</legend>
-        <p class="modal__text">현재 일정·과목을 JSON 파일로 내보내거나 다른 기기 파일을 불러올 수 있습니다. 불러오면 현재 데이터를 덮어씁니다.</p>
-        <button type="button" class="btn btn-secondary" id="exportDataBtn">JSON 내보내기</button>
-        <label class="btn btn-secondary import-file-label">
-          <span>JSON 불러오기</span>
-          <input type="file" id="importDataInput" accept="application/json,.json" hidden>
-        </label>
-      </fieldset>
-      <button type="button" class="btn btn-secondary" id="openSubjectsFromSettings">과목 관리 열기</button>
-      <button type="button" class="btn btn-secondary" id="settingsModalClose">닫기</button>
-    </div>
-  </dialog>
+      <header class="settings-header">
+        <button type="button" class="btn btn-secondary settings-back-btn" id="settingsBackBtn" hidden>← 뒤로</button>
+        <h2 id="settingsModalTitle" class="modal__title">설정</h2>
+      </header>
 
-  <dialog class="modal" id="subjectModal" aria-labelledby="subjectModalTitle">
-    <div class="modal__inner">
-      <h2 id="subjectModalTitle" class="modal__title">과목 관리</h2>
-      <ul class="subject-list" id="subjectList" aria-label="등록된 과목"></ul>
-      <form class="subject-add-form" id="subjectAddForm" autocomplete="off">
-        <label for="subjectNameInput" class="visually-hidden">새 과목 이름</label>
-        <input id="subjectNameInput" class="todo-input" type="text"
-               placeholder="새 과목 이름" maxlength="20" required>
-        <label for="subjectColorInput" class="visually-hidden">과목 색상</label>
-        <input id="subjectColorInput" class="color-input" type="color" value="#2563eb">
-        <button type="submit" class="btn btn-primary">추가</button>
-      </form>
-      <button type="button" class="btn btn-secondary" id="subjectModalClose">닫기</button>
+      <div class="settings-screen" data-screen="main">
+        <button type="button" class="btn btn-secondary settings-menu-btn" data-target="notify">알림</button>
+        <button type="button" class="btn btn-secondary settings-menu-btn" data-target="theme">테마</button>
+        <button type="button" class="btn btn-secondary settings-menu-btn" data-target="backup">백업</button>
+        <button type="button" class="btn btn-secondary settings-menu-btn" data-target="subjects">과목 관리</button>
+        <button type="button" class="btn btn-secondary" id="settingsModalClose">닫기</button>
+      </div>
+
+      <div class="settings-screen" data-screen="notify" hidden>
+        <fieldset class="setting-group">
+          <legend class="setting-legend">알림</legend>
+          <p class="modal__text">현재 권한: <strong id="notifyPermissionStatus">미설정</strong></p>
+          <p class="modal__text">페이지가 열려 있을 때만 알림이 옵니다. 백그라운드 알림은 PWA 설치 후 가능합니다.</p>
+          <button type="button" class="btn btn-secondary" id="requestNotifyBtn">알림 권한 요청</button>
+          <p class="setting-legend">알림 시점</p>
+          <ul class="notify-list" id="notifyList" aria-label="등록된 알림 시점"></ul>
+          <form class="notify-add-form" id="notifyAddForm" autocomplete="off">
+            <label for="notifyMinuteInput" class="visually-hidden">알림 분</label>
+            <input id="notifyMinuteInput" class="todo-input" type="number" min="0" max="1440" placeholder="분 (예: 10)">
+            <button type="submit" class="btn btn-primary">추가</button>
+          </form>
+        </fieldset>
+      </div>
+
+      <div class="settings-screen" data-screen="theme" hidden>
+        <fieldset class="setting-group">
+          <legend class="setting-legend">테마</legend>
+          <div class="theme-options">
+            <label class="theme-radio">
+              <input type="radio" name="theme" value="light"><span>라이트</span>
+            </label>
+            <label class="theme-radio">
+              <input type="radio" name="theme" value="dark"><span>다크</span>
+            </label>
+            <label class="theme-radio">
+              <input type="radio" name="theme" value="system" checked><span>시스템 자동</span>
+            </label>
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="settings-screen" data-screen="backup" hidden>
+        <fieldset class="setting-group">
+          <legend class="setting-legend">데이터 백업</legend>
+          <p class="modal__text">현재 일정·과목을 JSON 파일로 내보내거나 다른 기기 파일을 불러올 수 있습니다. 불러오면 현재 데이터를 덮어씁니다.</p>
+          <button type="button" class="btn btn-secondary" id="exportDataBtn">JSON 내보내기</button>
+          <label class="btn btn-secondary import-file-label">
+            <span>JSON 불러오기</span>
+            <input type="file" id="importDataInput" accept="application/json,.json" hidden>
+          </label>
+        </fieldset>
+      </div>
+
+      <div class="settings-screen" data-screen="subjects" hidden>
+        <fieldset class="setting-group">
+          <legend class="setting-legend">과목 관리</legend>
+          <ul class="subject-list" id="subjectList" aria-label="등록된 과목"></ul>
+          <form class="subject-add-form" id="subjectAddForm" autocomplete="off">
+            <label for="subjectNameInput" class="visually-hidden">새 과목 이름</label>
+            <input id="subjectNameInput" class="todo-input" type="text"
+                   placeholder="새 과목 이름" maxlength="20" required>
+            <label for="subjectColorInput" class="visually-hidden">과목 색상</label>
+            <input id="subjectColorInput" class="color-input" type="color" value="#2563eb">
+            <button type="submit" class="btn btn-primary">추가</button>
+          </form>
+        </fieldset>
+      </div>
     </div>
   </dialog>
 
   <footer class="app-footer">
-    <small>학습 플래너 v0.10 — Phase 10 (백업/복원)</small>
+    <small>학습 플래너 v0.11.1 — Phase 11 (알림 + 설정 정리)</small>
   </footer>
 
   <script>
@@ -1504,12 +1616,10 @@
     }));
 
     const subjectSelect = document.getElementById('subjectSelect');
-    const subjectModal = document.getElementById('subjectModal');
     const subjectList = document.getElementById('subjectList');
     const subjectAddForm = document.getElementById('subjectAddForm');
     const subjectNameInput = document.getElementById('subjectNameInput');
     const subjectColorInput = document.getElementById('subjectColorInput');
-    const subjectModalClose = document.getElementById('subjectModalClose');
 
     const getContrastText = (hex) => {
       const match = /^#([0-9a-f]{6})$/i.exec(hex);
@@ -1622,13 +1732,6 @@
       subjectNameInput.focus();
     });
 
-    subjectModalClose.addEventListener('click', () => {
-      subjectModal.close();
-    });
-
-    subjectModal.addEventListener('click', (event) => {
-      if (event.target === subjectModal) subjectModal.close();
-    });
 
     const formatDate = (date) => {
       const year = date.getFullYear();
@@ -1963,7 +2066,23 @@
     const settingsModalClose = document.getElementById('settingsModalClose');
     const openSettingsBtn = document.getElementById('openSettingsBtn');
     const themeRadios = Array.from(document.querySelectorAll('input[name="theme"]'));
-    const openSubjectsFromSettings = document.getElementById('openSubjectsFromSettings');
+    const settingsScreens = Array.from(document.querySelectorAll('.settings-screen'));
+    const settingsBackBtn = document.getElementById('settingsBackBtn');
+    const settingsMenuBtns = Array.from(document.querySelectorAll('.settings-menu-btn'));
+
+    const showSettingsScreen = (name) => {
+      settingsScreens.forEach((screen) => {
+        screen.hidden = screen.dataset.screen !== name;
+      });
+      settingsBackBtn.hidden = name === 'main';
+      if (name === 'subjects') renderSubjectList();
+    };
+
+    settingsMenuBtns.forEach((btn) => {
+      btn.addEventListener('click', () => showSettingsScreen(btn.dataset.target));
+    });
+
+    settingsBackBtn.addEventListener('click', () => showSettingsScreen('main'));
 
     const applyTheme = (theme) => {
       if (theme === 'dark') {
@@ -2010,18 +2129,15 @@
       if (loadTheme() === 'system') applyTheme('system');
     });
 
-    openSettingsBtn.addEventListener('click', () => settingsModal.showModal());
+    openSettingsBtn.addEventListener('click', () => {
+      showSettingsScreen('main');
+      settingsModal.showModal();
+    });
 
     settingsModalClose.addEventListener('click', () => settingsModal.close());
 
     settingsModal.addEventListener('click', (event) => {
       if (event.target === settingsModal) settingsModal.close();
-    });
-
-    openSubjectsFromSettings.addEventListener('click', () => {
-      settingsModal.close();
-      renderSubjectList();
-      subjectModal.showModal();
     });
 
     const exportDataBtn = document.getElementById('exportDataBtn');
@@ -2095,6 +2211,174 @@
         event.target.value = '';
       }
     });
+
+    const NOTIFY_KEY = 'study-planner:notifyMinutes';
+    const DEFAULT_NOTIFY_MINUTES = [5, 0];
+    const NOTIFY_CHECK_INTERVAL_MS = 30 * 1000;
+
+    let notifyMinutes = [...DEFAULT_NOTIFY_MINUTES];
+    const notifiedKeys = new Set();
+
+    const requestNotifyBtn = document.getElementById('requestNotifyBtn');
+    const notifyPermissionStatus = document.getElementById('notifyPermissionStatus');
+    const notifyList = document.getElementById('notifyList');
+    const notifyAddForm = document.getElementById('notifyAddForm');
+    const notifyMinuteInput = document.getElementById('notifyMinuteInput');
+
+    const updatePermissionStatus = () => {
+      if (!('Notification' in window)) {
+        notifyPermissionStatus.textContent = '브라우저 미지원';
+        return;
+      }
+      const labels = { default: '미설정', granted: '허용됨', denied: '거부됨' };
+      notifyPermissionStatus.textContent = labels[Notification.permission] || '미설정';
+    };
+
+    const requestNotifyPermission = async () => {
+      if (!('Notification' in window)) {
+        alert('이 브라우저는 알림을 지원하지 않습니다.');
+        return;
+      }
+      try {
+        const result = await Notification.requestPermission();
+        updatePermissionStatus();
+        if (result === 'default') {
+          alert('알림 권한을 받지 못했습니다. iOS Safari에서는 홈 화면에 추가(PWA) 후 다시 시도해 주세요.');
+        } else if (result === 'denied') {
+          alert('알림 권한이 거부되었습니다. 브라우저 설정에서 알림을 허용으로 변경해 주세요.');
+        }
+      } catch (error) {
+        alert('알림 권한 요청에 실패했습니다.');
+      }
+    };
+
+    const loadNotifyMinutes = () => {
+      try {
+        const raw = localStorage.getItem(NOTIFY_KEY);
+        if (!raw) return [...DEFAULT_NOTIFY_MINUTES];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [...DEFAULT_NOTIFY_MINUTES];
+        return parsed
+          .filter((value) => typeof value === 'number' && value >= 0 && value <= 1440)
+          .sort((a, b) => b - a);
+      } catch (error) {
+        return [...DEFAULT_NOTIFY_MINUTES];
+      }
+    };
+
+    const saveNotifyMinutes = () => {
+      try {
+        localStorage.setItem(NOTIFY_KEY, JSON.stringify(notifyMinutes));
+      } catch (error) {
+        alert('알림 설정을 저장하지 못했습니다.');
+      }
+    };
+
+    const formatNotifyLabel = (minutes) => {
+      if (minutes === 0) return '정시';
+      if (minutes < 60) return `${minutes}분 전`;
+      const hours = Math.floor(minutes / 60);
+      const remainder = minutes % 60;
+      if (remainder === 0) return `${hours}시간 전`;
+      return `${hours}시간 ${remainder}분 전`;
+    };
+
+    const renderNotifyList = () => {
+      notifyList.replaceChildren();
+      notifyMinutes.forEach((minutes) => {
+        const li = document.createElement('li');
+        li.className = 'notify-chip';
+
+        const label = document.createElement('span');
+        label.textContent = formatNotifyLabel(minutes);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'notify-chip__remove';
+        removeBtn.textContent = '×';
+        removeBtn.setAttribute('aria-label', `${formatNotifyLabel(minutes)} 알림 삭제`);
+        removeBtn.addEventListener('click', () => {
+          notifyMinutes = notifyMinutes.filter((value) => value !== minutes);
+          saveNotifyMinutes();
+          renderNotifyList();
+        });
+
+        li.append(label, removeBtn);
+        notifyList.append(li);
+      });
+    };
+
+    notifyAddForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const minutes = Number(notifyMinuteInput.value);
+      if (!Number.isFinite(minutes) || minutes < 0 || minutes > 1440) {
+        alert('0~1440 사이의 분을 입력해 주세요.');
+        return;
+      }
+      const integerMinutes = Math.floor(minutes);
+      if (notifyMinutes.includes(integerMinutes)) {
+        alert('이미 등록된 알림 시점입니다.');
+        return;
+      }
+      notifyMinutes.push(integerMinutes);
+      notifyMinutes.sort((a, b) => b - a);
+      saveNotifyMinutes();
+      renderNotifyList();
+      notifyMinuteInput.value = '';
+    });
+
+    requestNotifyBtn.addEventListener('click', requestNotifyPermission);
+
+    const checkNotifications = () => {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+      const now = new Date();
+      const todayStr = formatDate(now);
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+      todos.forEach((todo) => {
+        if (todo.done || !todo.startTime || todo.date !== todayStr) return;
+
+        const [hours, mins] = todo.startTime.split(':').map(Number);
+        if (!Number.isFinite(hours) || !Number.isFinite(mins)) return;
+        const startTotalMinutes = hours * 60 + mins;
+
+        notifyMinutes.forEach((offsetMinutes) => {
+          const triggerMinutes = startTotalMinutes - offsetMinutes;
+          if (triggerMinutes < 0 || triggerMinutes !== nowMinutes) return;
+
+          const key = `${todo.id}_${offsetMinutes}_${todayStr}`;
+          if (notifiedKeys.has(key)) return;
+          notifiedKeys.add(key);
+
+          const subject = todo.subjectId
+            ? subjects.find((item) => item.id === todo.subjectId)
+            : null;
+          const subjectPrefix = subject ? `[${subject.name}] ` : '';
+          const timeLabel = formatNotifyLabel(offsetMinutes);
+          const body = `${subjectPrefix}${todo.text}\n${todo.startTime} (${timeLabel})`;
+
+          try {
+            const notification = new Notification(`학습 플래너 — ${timeLabel}`, {
+              body,
+              tag: key,
+            });
+            notification.onclick = () => {
+              window.focus();
+              notification.close();
+            };
+          } catch (error) {
+            // 알림 생성 실패는 조용히 무시
+          }
+        });
+      });
+    };
+
+    notifyMinutes = loadNotifyMinutes();
+    updatePermissionStatus();
+    renderNotifyList();
+    setInterval(checkNotifications, NOTIFY_CHECK_INTERVAL_MS);
+    checkNotifications();
 
     const STORAGE_KEY = 'study-planner:v1';
 
