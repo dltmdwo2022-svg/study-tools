@@ -374,6 +374,141 @@
       font-weight: 500;
     }
 
+    .carry-over-btn {
+      width: 100%;
+      margin-bottom: var(--space-3);
+      padding: var(--space-3);
+      font-family: inherit;
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: #ffffff;
+      background: var(--color-warning);
+      border: 1px solid var(--color-warning);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: background 150ms ease-out;
+    }
+
+    .carry-over-btn:hover {
+      background: #c2410c;
+      border-color: #c2410c;
+    }
+
+    .carry-over-btn[hidden] {
+      display: none;
+    }
+
+    .week-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin-bottom: var(--space-3);
+    }
+
+    .week-title {
+      flex: 1;
+      text-align: center;
+      font-size: var(--text-base);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: var(--color-text);
+    }
+
+    .week-nav-btn {
+      flex-shrink: 0;
+      min-width: 44px;
+      min-height: 44px;
+      padding: var(--space-2);
+      font-size: var(--text-lg);
+      font-weight: 600;
+    }
+
+    .week-today-btn {
+      width: 100%;
+      margin-bottom: var(--space-4);
+      font-size: var(--text-sm);
+    }
+
+    .week-days {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .week-day {
+      background: var(--color-bg-alt);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-3);
+    }
+
+    .week-day.is-today {
+      border-color: var(--color-primary);
+      background: var(--color-primary-light);
+    }
+
+    .week-day__header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: var(--space-2);
+    }
+
+    .week-day__name {
+      font-size: var(--text-base);
+      font-weight: 600;
+      color: var(--color-text);
+    }
+
+    .week-day__date {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .week-day__list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+
+    .week-day__item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2);
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-sm);
+    }
+
+    .week-day__item.is-done .week-day__text {
+      text-decoration: line-through;
+      color: var(--color-text-muted);
+    }
+
+    .week-day__time {
+      flex-shrink: 0;
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .week-day__text {
+      flex: 1;
+      min-width: 0;
+      word-break: break-word;
+    }
+
+    .week-day__empty {
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+      text-align: center;
+      padding: var(--space-2);
+    }
+
     .btn-secondary {
       background: var(--color-bg);
       color: var(--color-text);
@@ -591,6 +726,9 @@
     </nav>
 
     <section id="panel-day" class="tab-panel" role="tabpanel" aria-labelledby="tab-day">
+      <button type="button" class="carry-over-btn" id="carryOverBtn" hidden>
+        이전 미완료 <span id="carryOverCount">0</span>개 가져오기
+      </button>
       <form class="todo-form" id="todoForm" autocomplete="off">
         <label for="todoInput" class="visually-hidden">할 일 입력</label>
         <input id="todoInput" class="todo-input" type="text"
@@ -617,7 +755,13 @@
     </section>
 
     <section id="panel-week" class="tab-panel" role="tabpanel" aria-labelledby="tab-week" hidden>
-      <p class="empty-state">주간 뷰는 Phase 6에서 구현됩니다.</p>
+      <header class="week-header">
+        <button type="button" class="btn btn-secondary week-nav-btn" id="weekPrevBtn" aria-label="이전 주">‹</button>
+        <h2 class="week-title" id="weekTitle"></h2>
+        <button type="button" class="btn btn-secondary week-nav-btn" id="weekNextBtn" aria-label="다음 주">›</button>
+      </header>
+      <button type="button" class="btn btn-secondary week-today-btn" id="weekTodayBtn">이번 주로</button>
+      <div class="week-days" id="weekDays" aria-label="주간 일정"></div>
     </section>
 
     <section id="panel-month" class="tab-panel" role="tabpanel" aria-labelledby="tab-month" hidden>
@@ -642,7 +786,7 @@
   </dialog>
 
   <footer class="app-footer">
-    <small>학습 플래너 v0.5 — Phase 5 (시간블록)</small>
+    <small>학습 플래너 v0.6 — Phase 6 (주간 뷰)</small>
   </footer>
 
   <script>
@@ -697,6 +841,7 @@
         subjectId: subjectId || null,
         startTime: startTime || null,
         endTime: endTime || null,
+        date: getTodayDateString(),
       });
       saveAll();
       render();
@@ -771,13 +916,26 @@
     });
 
     const render = () => {
+      const today = getTodayDateString();
+      const todayTodos = todos.filter((todo) => todo.date === today);
+
       todoList.replaceChildren();
-      if (todos.length === 0) {
+      if (todayTodos.length === 0) {
         emptyState.hidden = false;
-        return;
+      } else {
+        emptyState.hidden = true;
+        sortTodosForDisplay(todayTodos).forEach((todo) => todoList.append(buildTodoItem(todo)));
       }
-      emptyState.hidden = true;
-      sortTodosForDisplay(todos).forEach((todo) => todoList.append(buildTodoItem(todo)));
+
+      const overdue = todos.filter((todo) => !todo.done && todo.date && todo.date < today);
+      if (overdue.length > 0) {
+        carryOverCount.textContent = String(overdue.length);
+        carryOverBtn.hidden = false;
+      } else {
+        carryOverBtn.hidden = true;
+      }
+
+      renderWeek();
     };
 
     const timeToggleCheck = document.getElementById('timeToggleCheck');
@@ -960,6 +1118,165 @@
       if (event.target === subjectModal) subjectModal.close();
     });
 
+    const formatDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    const getTodayDateString = () => formatDate(new Date());
+
+    const getMondayOf = (sourceDate) => {
+      const date = new Date(sourceDate);
+      date.setHours(0, 0, 0, 0);
+      const day = date.getDay();
+      const offset = day === 0 ? -6 : 1 - day;
+      date.setDate(date.getDate() + offset);
+      return date;
+    };
+
+    const getWeekDates = (mondayDate) => {
+      const dates = [];
+      for (let i = 0; i < 7; i += 1) {
+        const d = new Date(mondayDate);
+        d.setDate(d.getDate() + i);
+        dates.push(d);
+      }
+      return dates;
+    };
+
+    const WEEKDAY_NAMES = ['월', '화', '수', '목', '금', '토', '일'];
+    let currentWeekMonday = getMondayOf(new Date());
+
+    const carryOverBtn = document.getElementById('carryOverBtn');
+    const carryOverCount = document.getElementById('carryOverCount');
+    const weekTitle = document.getElementById('weekTitle');
+    const weekDays = document.getElementById('weekDays');
+    const weekPrevBtn = document.getElementById('weekPrevBtn');
+    const weekNextBtn = document.getElementById('weekNextBtn');
+    const weekTodayBtn = document.getElementById('weekTodayBtn');
+
+    const carryOverOverdue = () => {
+      const today = getTodayDateString();
+      let count = 0;
+      todos.forEach((todo) => {
+        if (!todo.done && todo.date && todo.date < today) {
+          todo.date = today;
+          count += 1;
+        }
+      });
+      if (count > 0) {
+        saveAll();
+        render();
+      }
+    };
+
+    carryOverBtn.addEventListener('click', carryOverOverdue);
+
+    const buildWeekItem = (todo) => {
+      const li = document.createElement('li');
+      li.className = todo.done ? 'week-day__item is-done' : 'week-day__item';
+
+      const subject = todo.subjectId
+        ? subjects.find((s) => s.id === todo.subjectId)
+        : null;
+      if (subject) {
+        const badge = document.createElement('span');
+        badge.className = 'subject-badge';
+        badge.textContent = subject.name;
+        badge.style.background = subject.color;
+        badge.style.color = getContrastText(subject.color);
+        li.append(badge);
+      }
+
+      if (todo.startTime) {
+        const time = document.createElement('span');
+        time.className = 'week-day__time';
+        time.textContent = todo.endTime
+          ? `${todo.startTime}–${todo.endTime}`
+          : todo.startTime;
+        li.append(time);
+      }
+
+      const text = document.createElement('span');
+      text.className = 'week-day__text';
+      text.textContent = todo.text;
+      li.append(text);
+
+      return li;
+    };
+
+    const buildWeekDay = (date, dayName) => {
+      const dateStr = formatDate(date);
+      const today = getTodayDateString();
+
+      const wrapper = document.createElement('div');
+      wrapper.className = dateStr === today ? 'week-day is-today' : 'week-day';
+
+      const header = document.createElement('div');
+      header.className = 'week-day__header';
+
+      const nameEl = document.createElement('span');
+      nameEl.className = 'week-day__name';
+      nameEl.textContent = `${dayName}요일`;
+
+      const dateEl = document.createElement('span');
+      dateEl.className = 'week-day__date';
+      dateEl.textContent = `${date.getMonth() + 1}/${date.getDate()}`;
+
+      header.append(nameEl, dateEl);
+      wrapper.append(header);
+
+      const dayTodos = sortTodosForDisplay(todos.filter((todo) => todo.date === dateStr));
+
+      if (dayTodos.length === 0) {
+        const empty = document.createElement('p');
+        empty.className = 'week-day__empty';
+        empty.textContent = '없음';
+        wrapper.append(empty);
+      } else {
+        const list = document.createElement('ul');
+        list.className = 'week-day__list';
+        dayTodos.forEach((todo) => list.append(buildWeekItem(todo)));
+        wrapper.append(list);
+      }
+
+      return wrapper;
+    };
+
+    const renderWeek = () => {
+      const dates = getWeekDates(currentWeekMonday);
+      const start = dates[0];
+      const end = dates[6];
+      weekTitle.textContent =
+        `${start.getFullYear()}년 ${start.getMonth() + 1}월 ${start.getDate()}일 - ${end.getMonth() + 1}월 ${end.getDate()}일`;
+
+      weekDays.replaceChildren();
+      dates.forEach((date, index) => {
+        weekDays.append(buildWeekDay(date, WEEKDAY_NAMES[index]));
+      });
+    };
+
+    weekPrevBtn.addEventListener('click', () => {
+      const date = new Date(currentWeekMonday);
+      date.setDate(date.getDate() - 7);
+      currentWeekMonday = date;
+      renderWeek();
+    });
+
+    weekNextBtn.addEventListener('click', () => {
+      const date = new Date(currentWeekMonday);
+      date.setDate(date.getDate() + 7);
+      currentWeekMonday = date;
+      renderWeek();
+    });
+
+    weekTodayBtn.addEventListener('click', () => {
+      currentWeekMonday = getMondayOf(new Date());
+      renderWeek();
+    });
+
     const STORAGE_KEY = 'study-planner:v1';
 
     const saveAll = () => {
@@ -994,6 +1311,10 @@
       todos = stored.todos;
       subjects = stored.subjects;
     }
+
+    todos.forEach((todo) => {
+      if (!todo.date) todo.date = getTodayDateString();
+    });
 
     renderSubjectSelect();
     render();
