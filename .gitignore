@@ -1,0 +1,40 @@
+# 환경 변수 (API 키 등 비밀 정보)
+.env
+.env.local
+.env.*.local
+
+# 의존성
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 빌드 산출물
+dist/
+build/
+.next/
+out/
+.cache/
+
+# 로그
+*.log
+npm-debug.log*
+
+# OS / 에디터 (OneDrive·Windows 환경 대응)
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+.vscode/
+.idea/
+
+# Claude Code
+.claude_test
+.claude/
+
+# 프로젝트 백업 스냅샷 (OneDrive 가 이미 보관)
+**/backups/
+
+# 미공개 프로젝트 (정리 후 별도 처리)
+프로젝트4(영어지문분석)/

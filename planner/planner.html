@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="고3 학습 일정 플래너 — 일간/주간/월간 뷰 지원">
+  <link rel="icon" href="data:,">
+  <title>학습 플래너</title>
+  <style>
+    :root {
+      --color-primary: #2563eb;
+      --color-primary-hover: #1d4ed8;
+      --color-primary-light: #dbeafe;
+
+      --color-text: #0f172a;
+      --color-text-muted: #64748b;
+      --color-border: #e2e8f0;
+      --color-bg: #ffffff;
+      --color-bg-alt: #f8fafc;
+
+      --color-success: #16a34a;
+      --color-warning: #ea580c;
+      --color-error: #dc2626;
+      --color-info: #0284c7;
+
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
+
+      --text-xs: 0.75rem;
+      --text-sm: 0.875rem;
+      --text-base: 1rem;
+      --text-lg: 1.125rem;
+      --text-xl: 1.25rem;
+      --text-2xl: 1.5rem;
+      --text-3xl: 1.875rem;
+
+      --leading-tight: 1.25;
+      --leading-normal: 1.5;
+
+      --space-1: 0.25rem;
+      --space-2: 0.5rem;
+      --space-3: 0.75rem;
+      --space-4: 1rem;
+      --space-6: 1.5rem;
+      --space-8: 2rem;
+      --space-12: 3rem;
+
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 12px;
+
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      font-size: 16px;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      font-size: var(--text-base);
+      line-height: var(--leading-normal);
+      color: var(--color-text);
+      background: var(--color-bg-alt);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    button {
+      font-family: inherit;
+      font-size: inherit;
+      cursor: pointer;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+      border-radius: var(--radius-sm);
+    }
+
+    .app-header {
+      background: var(--color-bg);
+      border-bottom: 1px solid var(--color-border);
+      padding: var(--space-4);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .app-header__title {
+      font-size: var(--text-xl);
+      font-weight: 600;
+      line-height: var(--leading-tight);
+    }
+
+    .app-header__date {
+      margin-top: var(--space-1);
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+    }
+
+    .app-main {
+      flex: 1;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .tab-nav {
+      display: flex;
+      gap: var(--space-1);
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-1);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .tab-button {
+      flex: 1;
+      padding: var(--space-2) var(--space-3);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--color-text-muted);
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-md);
+      transition: background 150ms ease-out, color 150ms ease-out;
+    }
+
+    .tab-button:hover:not([aria-selected='true']) {
+      background: var(--color-bg-alt);
+      color: var(--color-text);
+    }
+
+    .tab-button[aria-selected='true'] {
+      background: var(--color-primary);
+      color: #ffffff;
+    }
+
+    .tab-panel {
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      min-height: 200px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .tab-panel[hidden] {
+      display: none;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--color-text-muted);
+      font-size: var(--text-sm);
+      padding: var(--space-8) var(--space-4);
+    }
+
+    .empty-state[hidden] {
+      display: none;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .todo-form {
+      display: flex;
+      gap: var(--space-2);
+      margin-bottom: var(--space-4);
+    }
+
+    .todo-input {
+      flex: 1;
+      min-width: 0;
+      padding: var(--space-3);
+      font-family: inherit;
+      font-size: var(--text-base);
+      color: var(--color-text);
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      transition: border-color 150ms ease-out;
+    }
+
+    .todo-input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-light);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-2) var(--space-4);
+      font-family: inherit;
+      font-size: var(--text-base);
+      font-weight: 500;
+      line-height: var(--leading-tight);
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      min-height: 44px;
+      transition: background 150ms ease-out, color 150ms ease-out, border-color 150ms ease-out;
+    }
+
+    .btn-primary {
+      background: var(--color-primary);
+      color: #ffffff;
+      border-color: var(--color-primary);
+    }
+
+    .btn-primary:hover {
+      background: var(--color-primary-hover);
+      border-color: var(--color-primary-hover);
+    }
+
+    .todo-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .todo-list:empty {
+      display: none;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-3);
+      background: var(--color-bg-alt);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+    }
+
+    .todo-check {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      cursor: pointer;
+      accent-color: var(--color-primary);
+    }
+
+    .todo-text {
+      flex: 1;
+      min-width: 0;
+      font-size: var(--text-base);
+      color: var(--color-text);
+      word-break: break-word;
+    }
+
+    .todo-item.is-done .todo-text {
+      text-decoration: line-through;
+      color: var(--color-text-muted);
+    }
+
+    .todo-delete {
+      flex-shrink: 0;
+      padding: var(--space-2) var(--space-3);
+      font-family: inherit;
+      font-size: var(--text-sm);
+      color: var(--color-error);
+      background: transparent;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      min-height: 36px;
+      transition: background 150ms ease-out, border-color 150ms ease-out;
+    }
+
+    .todo-delete:hover {
+      background: #fef2f2;
+      border-color: var(--color-error);
+    }
+
+    .app-footer {
+      text-align: center;
+      padding: var(--space-4);
+      color: var(--color-text-muted);
+      font-size: var(--text-xs);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        transition: none !important;
+        animation: none !important;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .app-header {
+        padding: var(--space-4) var(--space-6);
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--space-4);
+      }
+
+      .app-header__title {
+        font-size: var(--text-2xl);
+      }
+
+      .app-header__date {
+        margin-top: 0;
+      }
+
+      .app-main {
+        padding: var(--space-6);
+      }
+
+      .tab-button {
+        font-size: var(--text-base);
+        padding: var(--space-3) var(--space-4);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <h1 class="app-header__title">학습 플래너</h1>
+    <p class="app-header__date" id="todayDate" aria-live="polite"></p>
+  </header>
+
+  <main class="app-main">
+    <nav class="tab-nav" role="tablist" aria-label="플래너 뷰 전환">
+      <button id="tab-day" class="tab-button" type="button" role="tab"
+              aria-controls="panel-day" aria-selected="true">일간</button>
+      <button id="tab-week" class="tab-button" type="button" role="tab"
+              aria-controls="panel-week" aria-selected="false">주간</button>
+      <button id="tab-month" class="tab-button" type="button" role="tab"
+              aria-controls="panel-month" aria-selected="false">월간</button>
+    </nav>
+
+    <section id="panel-day" class="tab-panel" role="tabpanel" aria-labelledby="tab-day">
+      <form class="todo-form" id="todoForm" autocomplete="off">
+        <label for="todoInput" class="visually-hidden">할 일 입력</label>
+        <input id="todoInput" class="todo-input" type="text"
+               placeholder="할 일을 입력하세요" maxlength="100" required>
+        <button type="submit" class="btn btn-primary">추가</button>
+      </form>
+      <ul id="todoList" class="todo-list" aria-label="오늘의 할 일"></ul>
+      <p class="empty-state" id="emptyState">오늘 등록된 일정이 없습니다.</p>
+    </section>
+
+    <section id="panel-week" class="tab-panel" role="tabpanel" aria-labelledby="tab-week" hidden>
+      <p class="empty-state">주간 뷰는 Phase 6에서 구현됩니다.</p>
+    </section>
+
+    <section id="panel-month" class="tab-panel" role="tabpanel" aria-labelledby="tab-month" hidden>
+      <p class="empty-state">월간 뷰는 Phase 7에서 구현됩니다.</p>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <small>학습 플래너 v0.1 — Phase 1 (정적 골격)</small>
+  </footer>
+
+  <script>
+    'use strict';
+
+    const todayDateEl = document.getElementById('todayDate');
+    const today = new Date();
+    todayDateEl.textContent = today.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      weekday: 'long',
+    });
+
+    const tabButtons = Array.from(document.querySelectorAll('[role="tab"]'));
+    const tabPanels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
+
+    const activateTab = (targetTab) => {
+      tabButtons.forEach((btn) => {
+        btn.setAttribute('aria-selected', String(btn === targetTab));
+      });
+      tabPanels.forEach((panel) => {
+        panel.hidden = panel.id !== targetTab.getAttribute('aria-controls');
+      });
+    };
+
+    tabButtons.forEach((btn) => {
+      btn.addEventListener('click', () => activateTab(btn));
+    });
+
+    let todos = [];
+
+    const todoForm = document.getElementById('todoForm');
+    const todoInput = document.getElementById('todoInput');
+    const todoList = document.getElementById('todoList');
+    const emptyState = document.getElementById('emptyState');
+
+    const generateId = () => {
+      if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+        return window.crypto.randomUUID();
+      }
+      return `todo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    };
+
+    const addTodo = (rawText) => {
+      const text = rawText.trim();
+      if (!text) return;
+      todos.push({ id: generateId(), text, done: false });
+      render();
+    };
+
+    const toggleTodo = (id) => {
+      const todo = todos.find((item) => item.id === id);
+      if (!todo) return;
+      todo.done = !todo.done;
+      render();
+    };
+
+    const deleteTodo = (id) => {
+      todos = todos.filter((item) => item.id !== id);
+      render();
+    };
+
+    const buildTodoItem = (todo) => {
+      const li = document.createElement('li');
+      li.className = todo.done ? 'todo-item is-done' : 'todo-item';
+      li.dataset.id = todo.id;
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'todo-check';
+      checkbox.checked = todo.done;
+      checkbox.setAttribute('aria-label', `${todo.text} 완료 여부`);
+
+      const span = document.createElement('span');
+      span.className = 'todo-text';
+      span.textContent = todo.text;
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.className = 'todo-delete';
+      deleteBtn.textContent = '삭제';
+      deleteBtn.setAttribute('aria-label', `${todo.text} 삭제`);
+
+      li.append(checkbox, span, deleteBtn);
+      return li;
+    };
+
+    const render = () => {
+      todoList.replaceChildren();
+      if (todos.length === 0) {
+        emptyState.hidden = false;
+        return;
+      }
+      emptyState.hidden = true;
+      todos.forEach((todo) => todoList.append(buildTodoItem(todo)));
+    };
+
+    todoForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      addTodo(todoInput.value);
+      todoInput.value = '';
+      todoInput.focus();
+    });
+
+    todoList.addEventListener('click', (event) => {
+      const item = event.target.closest('.todo-item');
+      if (!item) return;
+      const { id } = item.dataset;
+      if (event.target.classList.contains('todo-check')) {
+        toggleTodo(id);
+      } else if (event.target.classList.contains('todo-delete')) {
+        deleteTodo(id);
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>

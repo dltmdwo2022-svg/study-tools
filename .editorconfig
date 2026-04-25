@@ -1,0 +1,21 @@
+# 모든 에디터에서 동일한 코딩 스타일 유지
+# https://editorconfig.org/
+# VS Code, Sublime, JetBrains 등이 자동 인식 (별도 설치 불필요)
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Python은 PEP 8 기준 4칸
+[*.py]
+indent_size = 4
+
+# Markdown은 줄 끝 공백이 줄바꿈 의미로 쓰여서 제외
+[*.md]
+trim_trailing_whitespace = false
