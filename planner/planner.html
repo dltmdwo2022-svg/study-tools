@@ -844,6 +844,100 @@
       background: #ffffff;
     }
 
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-3);
+    }
+
+    .stats-card {
+      background: var(--color-bg-alt);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-3);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+
+    .stats-card--full {
+      grid-column: 1 / -1;
+      gap: var(--space-3);
+    }
+
+    .stats-card__title {
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--color-text-muted);
+    }
+
+    .stats-card__big {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--color-text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stats-card__sub {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .bar-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .bar-list:empty::after {
+      content: '데이터가 없습니다.';
+      display: block;
+      text-align: center;
+      padding: var(--space-2);
+      color: var(--color-text-muted);
+      font-size: var(--text-sm);
+    }
+
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .bar-row__label {
+      flex: 0 0 88px;
+      font-size: var(--text-sm);
+      color: var(--color-text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .bar-row__bar-wrap {
+      flex: 1;
+      height: 22px;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .bar-row__bar {
+      height: 100%;
+      background: var(--color-primary);
+      transition: width 250ms ease-out;
+    }
+
+    .bar-row__count {
+      flex: 0 0 36px;
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+
     .btn-secondary {
       background: var(--color-bg);
       color: var(--color-text);
@@ -1058,6 +1152,8 @@
               aria-controls="panel-week" aria-selected="false">주간</button>
       <button id="tab-month" class="tab-button" type="button" role="tab"
               aria-controls="panel-month" aria-selected="false">월간</button>
+      <button id="tab-stats" class="tab-button" type="button" role="tab"
+              aria-controls="panel-stats" aria-selected="false">통계</button>
     </nav>
 
     <section id="panel-day" class="tab-panel" role="tabpanel" aria-labelledby="tab-day">
@@ -1133,6 +1229,46 @@
         <span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span>
       </div>
       <div class="month-grid" id="monthGrid" aria-label="월간 달력"></div>
+    </section>
+
+    <section id="panel-stats" class="tab-panel" role="tabpanel" aria-labelledby="tab-stats" hidden>
+      <div class="stats-grid">
+        <article class="stats-card">
+          <h3 class="stats-card__title">오늘 완료율</h3>
+          <p class="stats-card__big" id="statsTodayRate">0%</p>
+          <p class="stats-card__sub" id="statsTodayCount">0/0</p>
+        </article>
+        <article class="stats-card">
+          <h3 class="stats-card__title">이번 주 완료율</h3>
+          <p class="stats-card__big" id="statsWeekRate">0%</p>
+          <p class="stats-card__sub" id="statsWeekCount">0/0</p>
+        </article>
+        <article class="stats-card">
+          <h3 class="stats-card__title">이번 달 완료율</h3>
+          <p class="stats-card__big" id="statsMonthRate">0%</p>
+          <p class="stats-card__sub" id="statsMonthCount">0/0</p>
+        </article>
+        <article class="stats-card">
+          <h3 class="stats-card__title">전체 일정</h3>
+          <p class="stats-card__big" id="statsTotalCount">0</p>
+        </article>
+        <article class="stats-card">
+          <h3 class="stats-card__title">전체 완료</h3>
+          <p class="stats-card__big" id="statsDoneCount">0</p>
+        </article>
+        <article class="stats-card">
+          <h3 class="stats-card__title">연속 학습일</h3>
+          <p class="stats-card__big" id="statsStreak">0일</p>
+        </article>
+        <article class="stats-card stats-card--full">
+          <h3 class="stats-card__title">과목별 학습량</h3>
+          <ul class="bar-list" id="statsBySubject" aria-label="과목별 통계"></ul>
+        </article>
+        <article class="stats-card stats-card--full">
+          <h3 class="stats-card__title">요일별 분포</h3>
+          <ul class="bar-list" id="statsByWeekday" aria-label="요일별 통계"></ul>
+        </article>
+      </div>
     </section>
   </main>
 
@@ -1243,7 +1379,7 @@
   </dialog>
 
   <footer class="app-footer">
-    <small>학습 플래너 v0.11.1 — Phase 11 (알림 + 설정 정리)</small>
+    <small>학습 플래너 v0.12.1 — Phase 12 (통계 정리)</small>
   </footer>
 
   <script>
@@ -1271,7 +1407,10 @@
     };
 
     tabButtons.forEach((btn) => {
-      btn.addEventListener('click', () => activateTab(btn));
+      btn.addEventListener('click', () => {
+        activateTab(btn);
+        if (btn.id === 'tab-stats') renderStats();
+      });
     });
 
     let todos = [];
@@ -1495,6 +1634,10 @@
       renderMonth();
       if (selectedDate && dayModal.open) {
         renderDayModalList(selectedDate);
+      }
+      const statsTab = document.getElementById('tab-stats');
+      if (statsTab && statsTab.getAttribute('aria-selected') === 'true') {
+        renderStats();
       }
     };
 
@@ -2379,6 +2522,108 @@
     renderNotifyList();
     setInterval(checkNotifications, NOTIFY_CHECK_INTERVAL_MS);
     checkNotifications();
+
+    const calcCompletion = (filterFn) => {
+      const filtered = todos.filter(filterFn);
+      if (filtered.length === 0) return { rate: 0, done: 0, total: 0 };
+      const done = filtered.filter((todo) => todo.done).length;
+      return {
+        rate: Math.round((done / filtered.length) * 100),
+        done,
+        total: filtered.length,
+      };
+    };
+
+    const calcStreak = () => {
+      let streak = 0;
+      const cursor = new Date();
+      cursor.setHours(0, 0, 0, 0);
+      while (streak < 365) {
+        const dateStr = formatDate(cursor);
+        const hasCompleted = todos.some((todo) => todo.date === dateStr && todo.done);
+        if (!hasCompleted) break;
+        streak += 1;
+        cursor.setDate(cursor.getDate() - 1);
+      }
+      return streak;
+    };
+
+    const renderBars = (containerEl, rows) => {
+      containerEl.replaceChildren();
+      if (rows.length === 0) return;
+      const maxValue = Math.max(1, ...rows.map((row) => row.value));
+      rows.forEach((row) => {
+        const li = document.createElement('li');
+        li.className = 'bar-row';
+
+        const labelEl = document.createElement('span');
+        labelEl.className = 'bar-row__label';
+        labelEl.textContent = row.label;
+
+        const barWrap = document.createElement('div');
+        barWrap.className = 'bar-row__bar-wrap';
+        const bar = document.createElement('div');
+        bar.className = 'bar-row__bar';
+        bar.style.width = `${(row.value / maxValue) * 100}%`;
+        if (row.color) bar.style.background = row.color;
+        barWrap.append(bar);
+
+        const countEl = document.createElement('span');
+        countEl.className = 'bar-row__count';
+        countEl.textContent = String(row.value);
+
+        li.append(labelEl, barWrap, countEl);
+        containerEl.append(li);
+      });
+    };
+
+    const renderStats = () => {
+      const todayStr = getTodayDateString();
+      const todayStats = calcCompletion((todo) => todo.date === todayStr);
+      document.getElementById('statsTodayRate').textContent = `${todayStats.rate}%`;
+      document.getElementById('statsTodayCount').textContent = `${todayStats.done}/${todayStats.total}`;
+
+      const weekDateStrings = getWeekDates(getMondayOf(new Date())).map(formatDate);
+      const weekStats = calcCompletion((todo) => weekDateStrings.includes(todo.date));
+      document.getElementById('statsWeekRate').textContent = `${weekStats.rate}%`;
+      document.getElementById('statsWeekCount').textContent = `${weekStats.done}/${weekStats.total}`;
+
+      const now = new Date();
+      const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-`;
+      const monthStats = calcCompletion((todo) => todo.date && todo.date.startsWith(monthPrefix));
+      document.getElementById('statsMonthRate').textContent = `${monthStats.rate}%`;
+      document.getElementById('statsMonthCount').textContent = `${monthStats.done}/${monthStats.total}`;
+
+      document.getElementById('statsTotalCount').textContent = String(todos.length);
+      document.getElementById('statsDoneCount').textContent = String(todos.filter((t) => t.done).length);
+      document.getElementById('statsStreak').textContent = `${calcStreak()}일`;
+
+      const subjectRows = subjects.map((subject) => ({
+        label: subject.name,
+        value: todos.filter((todo) => todo.subjectId === subject.id).length,
+        color: subject.color,
+      }));
+      const noSubjectCount = todos.filter((todo) => !todo.subjectId).length;
+      if (noSubjectCount > 0) {
+        subjectRows.push({ label: '과목 없음', value: noSubjectCount, color: '#94a3b8' });
+      }
+      renderBars(document.getElementById('statsBySubject'), subjectRows);
+
+      const WEEKDAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
+      const weekdayCounts = [0, 0, 0, 0, 0, 0, 0];
+      todos.forEach((todo) => {
+        if (!todo.date) return;
+        const [y, m, d] = todo.date.split('-').map(Number);
+        const dayOfWeek = new Date(y, m - 1, d).getDay();
+        const index = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        weekdayCounts[index] += 1;
+      });
+      const weekdayRows = WEEKDAY_LABELS.map((label, index) => ({
+        label,
+        value: weekdayCounts[index],
+      }));
+      renderBars(document.getElementById('statsByWeekday'), weekdayRows);
+    };
 
     const STORAGE_KEY = 'study-planner:v1';
 
